@@ -7,7 +7,7 @@ fn main() {
     gen_alphabet("upper.txt", |x| x.is_ascii_uppercase());
     gen_alphabet("letter.txt", |x| x.is_ascii_alphabetic());
     gen_alphabet("digit.txt", |x| x.is_ascii_digit());
-    gen_alphabet("whitespace.txt", |x| x.is_ascii_whitespace());
+    gen_alphabet("whitespace.txt", |x| x == &' ');
     gen_alphabet("symbol.txt", |x| {
         !(x.is_ascii_control()
             || x.is_ascii_alphanumeric()

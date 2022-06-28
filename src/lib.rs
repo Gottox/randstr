@@ -115,7 +115,7 @@ impl RandStrBuilder {
         self.must_symbol = true;
         self.symbol()
     }
-    /// Forces the generator to produce strings containing symbols.
+    /// Forces the generator to produce strings containing whitespaces.
     pub fn must_whitespace(&mut self) -> &mut Self {
         self.must_whitespace = true;
         self.symbol()
