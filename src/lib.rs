@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 use rand::seq::SliceRandom;
 
 static UPPER_ALPHABET: &str =
@@ -200,6 +202,7 @@ impl RandStrBuilder {
     }
 }
 
+/// The generator to produce new random strings.
 pub struct RandStr {
     alphabet: Vec<u8>,
     must_alphabets: Vec<Vec<u8>>,
@@ -208,6 +211,7 @@ pub struct RandStr {
 }
 
 impl RandStr {
+    /// Generates a new random string.
     pub fn generate(&mut self) -> String {
         let capacity = self.len + self.must_alphabets.len();
 
@@ -233,6 +237,19 @@ impl RandStr {
     }
 }
 
+/// Creates a new RandStrBuilder.
+///
+/// # Examples
+///
+/// ```rust
+/// use randstr::randstr;
+///
+/// let mut generator = randstr()
+///   .len(10)
+///   .all()
+///   .build();
+/// println!("{}", generator.generate())
+/// ```
 pub fn randstr() -> RandStrBuilder {
     RandStrBuilder::new()
 }
