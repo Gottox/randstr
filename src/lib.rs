@@ -1,3 +1,4 @@
+#![warn(missing_docs)]
 #![doc = include_str!("../README.md")]
 
 use rand::seq::SliceRandom;
@@ -6,6 +7,10 @@ static UPPER_ALPHABET: &str =
     include_str!(concat!(env!("OUT_DIR"), "/upper.txt"));
 static LOWER_ALPHABET: &str =
     include_str!(concat!(env!("OUT_DIR"), "/lower.txt"));
+static LETTER_ALPHABET: &str = concat!(
+    include_str!(concat!(env!("OUT_DIR"), "/lower.txt")),
+    include_str!(concat!(env!("OUT_DIR"), "/upper.txt")),
+);
 static DIGIT_ALPHABET: &str =
     include_str!(concat!(env!("OUT_DIR"), "/digit.txt"));
 static SYMBOL_ALPHABET: &str =
@@ -17,6 +22,7 @@ static WHITESPACE_ALPHABET: &str =
 pub struct RandStrBuilder {
     upper: Option<&'static str>,
     lower: Option<&'static str>,
+    letter: Option<&'static str>,
     digit: Option<&'static str>,
     symbol: Option<&'static str>,
     whitespace: Option<&'static str>,
@@ -24,6 +30,7 @@ pub struct RandStrBuilder {
 
     must_upper: bool,
     must_lower: bool,
+    must_letter: bool,
     must_digit: bool,
     must_symbol: bool,
     must_whitespace: bool,
@@ -39,12 +46,14 @@ impl RandStrBuilder {
         RandStrBuilder {
             upper: None,
             lower: None,
+            letter: None,
             digit: None,
             symbol: None,
             whitespace: None,
             custom: None,
             must_upper: false,
             must_lower: false,
+            must_letter: false,
             must_digit: false,
             must_symbol: false,
             must_whitespace: false,
@@ -65,7 +74,8 @@ impl RandStrBuilder {
     }
     /// Allows the product to produce uppercase and lowercase letters.
     pub fn letter(&mut self) -> &mut Self {
-        self.upper().lower()
+        self.letter = Some(LETTER_ALPHABET);
+        self
     }
     /// Allows the generator to produce whitespaces.
     pub fn whitespace(&mut self) -> &mut Self {
@@ -101,9 +111,10 @@ impl RandStrBuilder {
         self.must_lower = true;
         self.lower()
     }
-    /// Forces the generator to produce strings containing uppercase and lowercase letters.
-    pub fn must_upper_lower(&mut self) -> &mut Self {
-        self.must_upper().must_lower()
+    /// Forces the generator to produce strings containing letters.
+    pub fn must_letter(&mut self) -> &mut Self {
+        self.must_letter = true;
+        self.letter()
     }
     /// Forces the generator to produce strings containing digits.
     pub fn must_digit(&mut self) -> &mut Self {
@@ -140,9 +151,10 @@ impl RandStrBuilder {
         let options = self;
 
         let custom = options.custom.as_deref();
-        let alphabet: Vec<_> = [
+        let mut alphabet: Vec<_> = [
             options.upper,
             options.lower,
+            options.letter,
             options.digit,
             options.symbol,
             options.whitespace,
@@ -158,6 +170,9 @@ impl RandStrBuilder {
             panic!("No alphabet specified");
         }
 
+        alphabet.sort();
+        alphabet.dedup();
+
         let must_alphabets: Vec<_> = [
             options
                 .must_upper
@@ -166,8 +181,8 @@ impl RandStrBuilder {
                 .must_lower
                 .then(|| options.lower.expect("lower alphabet is not set")),
             options
-                .must_lower
-                .then(|| options.lower.expect("lower alphabet is not set")),
+                .must_letter
+                .then(|| options.letter.expect("lower alphabet is not set")),
             options
                 .must_digit
                 .then(|| options.digit.expect("digit alphabet is not set")),
