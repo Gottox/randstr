@@ -170,7 +170,7 @@ impl RandStrBuilder {
             panic!("No alphabet specified");
         }
 
-        alphabet.sort();
+        alphabet.sort_unstable();
         alphabet.dedup();
 
         let must_alphabets: Vec<_> = [
