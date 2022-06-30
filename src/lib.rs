@@ -1,6 +1,8 @@
 #![warn(missing_docs)]
 #![doc = include_str!("../README.md")]
 
+use std::{error, fmt};
+
 use rand::seq::SliceRandom;
 
 static UPPER_ALPHABET: &str =
@@ -17,6 +19,29 @@ static SYMBOL_ALPHABET: &str =
     include_str!(concat!(env!("OUT_DIR"), "/symbol.txt"));
 static WHITESPACE_ALPHABET: &str =
     include_str!(concat!(env!("OUT_DIR"), "/whitespace.txt"));
+
+/// Error Type of randstr
+#[derive(Debug)]
+pub enum Error {
+    /// Error when no alphabet is specified before calling `try_build`
+    NoAlphabet,
+    /// Error when the generated string is too short to contain all mandatory characters.
+    TooShort,
+}
+
+impl error::Error for Error {}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Error::NoAlphabet => write!(f, "No alphabet specified"),
+            Error::TooShort => write!(
+                f,
+                "Length is too short to contain all mandatory alphabets"
+            ),
+        }
+    }
+}
 
 /// Builder for generating random strings.
 pub struct RandStrBuilder {
@@ -148,6 +173,10 @@ impl RandStrBuilder {
     }
     /// Builds the random string producer.
     pub fn build(&self) -> RandStr {
+        self.try_build().unwrap()
+    }
+    /// Builds the random string producer. Returns an error if the builder cannot be built.
+    pub fn try_build(&self) -> Result<RandStr, Error> {
         let options = self;
 
         let custom = options.custom.as_deref();
@@ -167,7 +196,7 @@ impl RandStrBuilder {
         .collect();
 
         if alphabet.is_empty() {
-            panic!("No alphabet specified");
+            Err(Error::NoAlphabet)?;
         }
 
         alphabet.sort_unstable();
@@ -203,17 +232,17 @@ impl RandStrBuilder {
 
         let len = options.len;
         if len < must_alphabets.len() {
-            panic!("Length is too short to contain all mandatory alphabets");
+            Err(Error::TooShort)?;
         }
 
         let rng = options.rng.clone().unwrap_or_else(rand::thread_rng);
 
-        RandStr {
+        Ok(RandStr {
             alphabet,
             must_alphabets,
             len,
             rng,
-        }
+        })
     }
 }
 
