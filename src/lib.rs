@@ -268,7 +268,6 @@ impl RandStr {
             if !alpha.iter().any(|&a| result.contains(&a)) {
                 rearrange = true;
                 result.push(*alpha.choose(&mut self.rng).unwrap());
-                break;
             }
         }
 
