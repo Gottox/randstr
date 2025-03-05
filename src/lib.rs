@@ -44,13 +44,15 @@ impl fmt::Display for Error {
 }
 
 /// Builder for generating random strings.
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct RandStrBuilder {
-    upper: Option<&'static str>,
-    lower: Option<&'static str>,
-    letter: Option<&'static str>,
-    digit: Option<&'static str>,
-    symbol: Option<&'static str>,
-    whitespace: Option<&'static str>,
+    upper: bool,
+    lower: bool,
+    letter: bool,
+    digit: bool,
+    symbol: bool,
+    whitespace: bool,
     custom: Option<String>,
 
     must_upper: bool,
@@ -61,20 +63,21 @@ pub struct RandStrBuilder {
     must_whitespace: bool,
     must_custom: bool,
 
-    rng: Option<rand::rngs::ThreadRng>,
-
     len: usize,
+
+    #[cfg_attr(feature = "serde", serde(skip))]
+    rng: Option<rand::rngs::ThreadRng>,
 }
 
 impl RandStrBuilder {
     fn new() -> Self {
         RandStrBuilder {
-            upper: None,
-            lower: None,
-            letter: None,
-            digit: None,
-            symbol: None,
-            whitespace: None,
+            upper: false,
+            lower: false,
+            letter: false,
+            digit: false,
+            symbol: false,
+            whitespace: false,
             custom: None,
             must_upper: false,
             must_lower: false,
@@ -89,32 +92,32 @@ impl RandStrBuilder {
     }
     /// Allows the generator to produce uppercase letters.
     pub fn upper(&mut self) -> &mut Self {
-        self.upper = Some(UPPER_ALPHABET);
+        self.upper = true;
         self
     }
     /// Allows the generator to produce lowercase letters.
     pub fn lower(&mut self) -> &mut Self {
-        self.lower = Some(LOWER_ALPHABET);
+        self.lower = true;
         self
     }
     /// Allows the product to produce uppercase and lowercase letters.
     pub fn letter(&mut self) -> &mut Self {
-        self.letter = Some(LETTER_ALPHABET);
+        self.letter = true;
         self
     }
     /// Allows the generator to produce whitespaces.
     pub fn whitespace(&mut self) -> &mut Self {
-        self.whitespace = Some(WHITESPACE_ALPHABET);
+        self.whitespace = true;
         self
     }
     /// Allows the generator to produce digits.
     pub fn digit(&mut self) -> &mut Self {
-        self.digit = Some(DIGIT_ALPHABET);
+        self.digit = true;
         self
     }
     /// Allows the generator to produce symbols.
     pub fn symbol(&mut self) -> &mut Self {
-        self.symbol = Some(SYMBOL_ALPHABET);
+        self.symbol = true;
         self
     }
     /// Allows the generator to produce custom characters.
@@ -181,12 +184,12 @@ impl RandStrBuilder {
 
         let custom = options.custom.as_deref();
         let mut alphabet: Vec<_> = [
-            options.upper,
-            options.lower,
-            options.letter,
-            options.digit,
-            options.symbol,
-            options.whitespace,
+            options.upper.then_some(UPPER_ALPHABET),
+            options.lower.then_some(LOWER_ALPHABET),
+            options.letter.then_some(LETTER_ALPHABET),
+            options.digit.then_some(DIGIT_ALPHABET),
+            options.symbol.then_some(SYMBOL_ALPHABET),
+            options.whitespace.then_some(WHITESPACE_ALPHABET),
             custom,
         ]
         .into_iter()
@@ -203,24 +206,12 @@ impl RandStrBuilder {
         alphabet.dedup();
 
         let must_alphabets: Vec<_> = [
-            options
-                .must_upper
-                .then(|| options.upper.expect("upper alphabet is not set")),
-            options
-                .must_lower
-                .then(|| options.lower.expect("lower alphabet is not set")),
-            options
-                .must_letter
-                .then(|| options.letter.expect("lower alphabet is not set")),
-            options
-                .must_digit
-                .then(|| options.digit.expect("digit alphabet is not set")),
-            options.must_whitespace.then(|| {
-                options.whitespace.expect("whitespace alphabet is not set")
-            }),
-            options
-                .must_symbol
-                .then(|| options.symbol.expect("symbol alphabet is not set")),
+            options.must_upper.then_some(UPPER_ALPHABET),
+            options.must_lower.then_some(LOWER_ALPHABET),
+            options.must_letter.then_some(LETTER_ALPHABET),
+            options.must_digit.then_some(DIGIT_ALPHABET),
+            options.must_whitespace.then_some(WHITESPACE_ALPHABET),
+            options.must_symbol.then_some(SYMBOL_ALPHABET),
             options
                 .must_custom
                 .then(|| custom.expect("symbol alphabet is not set")),
